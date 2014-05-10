@@ -17,17 +17,14 @@
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-    if (self) {
-        // Custom initialization
-    }
+    if (self) {}
     return self;
 }
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    
-   	// Do any additional setup after loading the view.
+    //elmentett szundiidő betöltése, ha van, különben 5
     NSInteger snooze = [[NSUserDefaults standardUserDefaults] integerForKey:@"snooze"];
     if(snooze)
     {
@@ -35,6 +32,7 @@
     }
     [self.snoozeTime setText:[NSString stringWithFormat:@"%d",(int)self.stepper.value]];
     
+    //elmentett be/ki állapot betöltése, alapból be van kapcsolva
     NSString* OnOff = [[NSUserDefaults standardUserDefaults] objectForKey:@"state"];
     
     if ([OnOff isEqualToString:@"off"]) {
@@ -49,18 +47,20 @@
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
+
 - (IBAction)switchChanged:(id)sender {
+    //ha bekapcsoljuk, akkor az összes létező alarmhoz létrehozzuk a notification-öket
     if ([self.OnOffSwitch isOn]) {
         [[NSUserDefaults standardUserDefaults] setObject:@"on" forKey:@"state"];
         NSLog(@"on");
         [NotificationManager setNotificationForAllAlarm];
     }
     else
+    //ha kikapcsoljuk, töröljük az összes létező notification-t
     {
         [[NSUserDefaults standardUserDefaults] setObject:@"off" forKey:@"state"];
-         NSLog(@"off");
+        NSLog(@"off");
         [NotificationManager deleteAllNotification];
     }
     [[NSUserDefaults standardUserDefaults] synchronize];

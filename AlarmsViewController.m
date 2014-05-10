@@ -19,32 +19,31 @@
 @implementation AlarmsViewController
 {
     NSArray *_alarms;
-     NSFetchedResultsController* _fetchedResultsController;
+    NSFetchedResultsController* _fetchedResultsController;
 }
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
     self = [super initWithStyle:style];
-    if (self) {
-        // Custom initialization
-    }
+    if (self) {}
     return self;
 }
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
- 
-    NSArray *notifications = [[UIApplication sharedApplication] scheduledLocalNotifications];
-    NSLog(@"Ntoi tömb mérete: %d", [notifications count]);
-    for (UILocalNotification *notif in notifications) {
-        NSDictionary *current = notif.userInfo;
-        NSLog(@"Létező notif: %@:",current);
-        NSLog(@"notif firedat: %@", notif.fireDate);
-        NSLog(@"Rendszerdátum: %@",[NSDate date]);
-    }
     
+    //létező notificationok kilogolása
+//    NSArray *notifications = [[UIApplication sharedApplication] scheduledLocalNotifications];
+//    NSLog(@"Noti tömb mérete: %d", [notifications count]);
+//    for (UILocalNotification *notif in notifications) {
+//        NSDictionary *current = notif.userInfo;
+//        NSLog(@"Létező notif: %@:",current);
+//        NSLog(@"notif firedat: %@", notif.fireDate);
+//        NSLog(@"Rendszerdátum: %@",[NSDate date]);
+//    }
     
+    //elmentett alarm-ok lekérdezése
     NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] initWithEntityName:@"Alarms"];
     NSSortDescriptor *sort = [[NSSortDescriptor alloc]
                               initWithKey:@"alarmname" ascending:YES];
@@ -60,7 +59,7 @@
     
     NSError *error;
     
-
+    
     if (![_fetchedResultsController performFetch:&error])
     {
         NSLog(@"Hiba a lekérdezéskor %@, %@", error, [error userInfo]);
@@ -71,13 +70,13 @@
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
 
 #pragma mark - Table view data source
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
+    //ha egy kiválasztott alarmot akarunk módosítani, itt adjuk át az objektumot a másik view-nak
     if([segue.identifier isEqualToString:@"AlarmDetailSegue"])
     {
         AlarmDetailViewController* alarmVC = segue.destinationViewController;
@@ -87,7 +86,6 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    // Return the number of sections. Csak egy szekció van
     return 1;
 }
 
@@ -103,7 +101,7 @@
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
     
     [self configureCell:cell atIndexPath:indexPath];
-     
+    
     return cell;
 }
 
@@ -155,7 +153,7 @@
         default:
             break;
     }
-
+    
     NSString *hourString = [[NSString alloc]init];
     NSString *minuteString = [[NSString alloc]init];
     
@@ -168,10 +166,10 @@
     }
     
     if ([alarm.alarmminute stringValue].length == 1 ) {
-       minuteString = [NSString stringWithFormat:@"0%@",alarm.alarmminute];
+        minuteString = [NSString stringWithFormat:@"0%@",alarm.alarmminute];
     }
     else{
-       minuteString = alarm.alarmminute.stringValue;
+        minuteString = alarm.alarmminute.stringValue;
     }
     
     NSString *labelText = [NSString stringWithFormat:@"%@:%@",hourString,minuteString];
@@ -182,35 +180,26 @@
     labelText = [labelText stringByAppendingString:weekString];
     cell.detailTextLabel.text = labelText;
 }
-/*
- // Override to support conditional editing of the table view.
- - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
- {
- // Return NO if you do not want the specified item to be editable.
- return YES;
- }
- */
 
 
- // Override to support editing the table view.
- - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
- {
- if (editingStyle == UITableViewCellEditingStyleDelete) {
- // Delete the row from the data source
-     
-     NSLog(@"Törlés ok");
-     Alarms *delete = [_fetchedResultsController objectAtIndexPath:indexPath];
-     [NotificationManager deleteNotificationByAlarmName:delete.alarmname];
-     
-     [[alarmDB context] deleteObject:delete];
-     [[alarmDB context] save:nil];
-
- }
- }
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    //törlés funkció
+    if (editingStyle == UITableViewCellEditingStyleDelete) {
+        //töröljük a tárolt alarm objektumot és a hozzátartozó notification-t
+        Alarms *delete = [_fetchedResultsController objectAtIndexPath:indexPath];
+        [NotificationManager deleteNotificationByAlarmName:delete.alarmname];
+        
+        [[alarmDB context] deleteObject:delete];
+        [[alarmDB context] save:nil];
+        
+    }
+}
 
 - (void)controllerWillChangeContent:
 (NSFetchedResultsController *)controller
 {
+    //változás történ az adatbázisban
     [self.tableView beginUpdates];
 }
 
@@ -224,21 +213,22 @@
     switch(type) {
             
         case NSFetchedResultsChangeInsert:
+            //új elemet mentettünk az adatbázisban, amit megjelenítünk a listában és létrehozzuk hozzá a notification-t
             [self.tableView insertRowsAtIndexPaths:@[newIndexPath]
-                             withRowAnimation:UITableViewRowAnimationAutomatic];
-         
+                                  withRowAnimation:UITableViewRowAnimationAutomatic];
+            
             [NotificationManager setNewLocalNotification:[_fetchedResultsController objectAtIndexPath:newIndexPath]];
-
+            
             break;
             
         case NSFetchedResultsChangeDelete:
+            //töröljül a listából is az adott alarm-ot
             [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
             
             break;
             
         case NSFetchedResultsChangeUpdate:
-            //NSLog(@"change detected");
-            
+            //ha valamelyik alarm megváltozott, újratöltjük a listát
             [self.tableView reloadData];
             
             break;

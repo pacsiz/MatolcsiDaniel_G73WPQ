@@ -17,6 +17,5 @@
 +(Alarms*) setAlarmDetailsOf:(Alarms *)alarm alarmName:(NSString *)alarmName alarmDay:(NSNumber *)alarmDay alarmWeek:(NSNumber *)alarmWeek alarmDate:(NSDate* )alarmDate;
 +(void)saveAlarmDB;
 +(Alarms*)newAlarm;
-+(NSInteger)getCurrentWeekday;
 
 @end

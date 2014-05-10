@@ -18,9 +18,7 @@
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-    if (self) {
-        // Custom initialization
-    }
+    if (self) {}
     return self;
 }
 
@@ -29,41 +27,117 @@
     [super viewDidLoad];
     [self.alarmName setDelegate:self];
     
+    //ha egy adott alarmot akarunk módosítani, akkor annak az adatait beállítjuk a view-on
     if (self.modifiThis) {
         self.alarmName.text = self.modifiThis.alarmname;
         [self.alarmDayandWeek selectRow:self.modifiThis.alarmday.intValue-1 inComponent:0 animated:YES ];
         [self.alarmDayandWeek selectRow:self.modifiThis.alarmweek.intValue inComponent:1 animated:YES ];
         
         NSString *time = [NSString stringWithFormat:@"%@:%@",self.modifiThis.alarmhour.stringValue,self.modifiThis.alarmminute.stringValue];
-
+        
         NSDateFormatter *formatter = [[NSDateFormatter alloc]init];
         [formatter setLocale:self.alarmTime.locale];
         [formatter setDateFormat:@"HH:mm"];
-
+        
         NSDate *date = [formatter dateFromString:time];
-      
+        
         [self.alarmTime setDate:date];
     }
-    // Do any additional setup after loading the view.
 }
 
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+}
+
+-(NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView {
+    return 2;
 }
 
 
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+- (NSInteger) pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component
 {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
+    NSInteger retVal;
+    if (component == 0) { // A hét napjai
+        retVal = 7;
+    }
+    else
+        retVal = 3; //páros/páratlan/minden hét
+    return retVal;
 }
-*/
+
+- (NSString *)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component
+{
+    NSString *retVal;
+    
+    if (component == 0) {
+        NSLocale *huLocale = [[NSLocale alloc] initWithLocaleIdentifier:@"hu"];
+        NSDateFormatter *df;
+        df = [[NSDateFormatter alloc] init];
+        [df setLocale:huLocale];
+        
+        retVal = [[df weekdaySymbols] objectAtIndex:row];
+    }
+    else
+    {
+        switch (row) {
+            case 0:
+                retVal = @"Minden hét";
+                break;
+            case 1:
+                retVal = @"Páratlan hét";
+                break;
+            case 2:
+                retVal = @"Páros hét";
+            default:
+                break;
+        }
+    }
+    return retVal;
+}
+
+- (IBAction)save:(id)sender {
+    
+    NSArray *alarm = [AlarmManager doesAlarmExistByName:self.alarmName.text];
+    NSInteger week = [self.alarmDayandWeek selectedRowInComponent:1];
+    NSInteger day = [self.alarmDayandWeek selectedRowInComponent:0]+1;
+    Alarms *currentAlarm;
+    
+    
+    if (self.modifiThis) {
+        //a módosítandó alarm neve lehet új, még nem létező név vagy a saját régi neve
+        if ((![self.modifiThis.alarmname isEqualToString:self.alarmName.text] && alarm.count > 0) || [self.alarmName.text isEqualToString:@""]) {
+            [self nameExistAlert];
+        }
+        else {//módosítás esetén a korábbi notification törlődik, mentjük a változtatásokat és létrehozzuk az új noti.-t
+            currentAlarm = self.modifiThis;
+            [NotificationManager deleteNotificationByAlarmName:self.modifiThis.alarmname];
+            [AlarmManager setAlarmDetailsOf:currentAlarm alarmName:self.alarmName.text alarmDay:[NSNumber numberWithInt:day] alarmWeek:[NSNumber numberWithInt:week] alarmDate:self.alarmTime.date];
+            
+            [NotificationManager setNewLocalNotification:currentAlarm];
+            [AlarmManager saveAlarmDB];
+            [self.navigationController popViewControllerAnimated:YES];
+            
+        }
+    }
+    else {
+        
+        //új alarm neve egyedi kell, hogy legyen és nem lehet üres
+        if (alarm.count > 0 || [self.alarmName.text isEqualToString:@""])
+        {
+            [self nameExistAlert];
+        }
+        else
+        {
+            currentAlarm = [AlarmManager newAlarm];
+            [AlarmManager setAlarmDetailsOf:currentAlarm alarmName:self.alarmName.text alarmDay:[NSNumber numberWithInt:day] alarmWeek:[NSNumber numberWithInt:week] alarmDate:self.alarmTime.date];
+            
+            [AlarmManager saveAlarmDB];
+            //visszalépés az előző view-ra
+            [self.navigationController popViewControllerAnimated:YES];
+        }
+    }
+}
 
 - (IBAction)textEditingDidEnd:(id)sender {
     [self.alarmName resignFirstResponder];
@@ -77,97 +151,8 @@
                                           cancelButtonTitle:@"OK"
                                           otherButtonTitles:nil];
     [alert show];
-
-}
-
-- (IBAction)save:(id)sender {
     
-    NSArray *alarm = [AlarmManager doesAlarmExistByName:self.alarmName.text];
-    NSInteger week = [self.alarmDayandWeek selectedRowInComponent:1];
-    NSInteger day = [self.alarmDayandWeek selectedRowInComponent:0]+1;
-    Alarms *currentAlarm;
-    
-    if (self.modifiThis) {
-        if ((![self.modifiThis.alarmname isEqualToString:self.alarmName.text] && alarm.count > 0) || [self.alarmName.text isEqualToString:@""]) {
-            [self nameExistAlert];
-        }
-        else {
-            currentAlarm = self.modifiThis;
-            [NotificationManager deleteNotificationByAlarmName:self.modifiThis.alarmname];
-            [AlarmManager setAlarmDetailsOf:currentAlarm alarmName:self.alarmName.text alarmDay:[NSNumber numberWithInt:day] alarmWeek:[NSNumber numberWithInt:week] alarmDate:self.alarmTime.date];
-            [NotificationManager deleteNotificationByAlarmName:self.modifiThis.alarmname];
-            
-            [NotificationManager setNewLocalNotification:currentAlarm];
-            [AlarmManager saveAlarmDB];
-            [self.navigationController popViewControllerAnimated:YES];
-            
-        }
-    }
-    else {
-    
-        if (alarm.count > 0 || [self.alarmName.text isEqualToString:@""])
-        {
-            [self nameExistAlert];
-        }
-        else
-        {
-            currentAlarm = [AlarmManager newAlarm];
-            [AlarmManager setAlarmDetailsOf:currentAlarm alarmName:self.alarmName.text alarmDay:[NSNumber numberWithInt:day] alarmWeek:[NSNumber numberWithInt:week] alarmDate:self.alarmTime.date];
-            
-            [AlarmManager saveAlarmDB];
-            [self.navigationController popViewControllerAnimated:YES];
-            
-        }
-    
-    }
 }
-
--(NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView {
-    return 2;
-}
-
-
-- (NSInteger) pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component
-{
-    NSInteger retVal;
-    if (component == 0) { // A hét napjai
-        retVal = 7;
-    } // A hét napjai
-else
-    retVal = 3;
-    return retVal;
-}
-
-- (NSString *)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component
-{
-    NSString *retVal;
-    
-    if (component == 0) { // A hét napjai
-        NSLocale *huLocale = [[NSLocale alloc] initWithLocaleIdentifier:@"hu"];
-        NSDateFormatter *df;
-        df = [[NSDateFormatter alloc] init];
-        [df setLocale:huLocale];
-        
-        retVal = [[df weekdaySymbols] objectAtIndex:row];
-          } // A hét napja
-else
-{
-    switch (row) {
-        case 0:
-            retVal = @"Minden hét";
-            break;
-        case 1:
-            retVal = @"Páratlan hét";
-            break;
-        case 2:
-            retVal = @"Páros hét";
-        default:
-            break;
-    }
-}
-    return retVal;
-}
-
 
 -(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {

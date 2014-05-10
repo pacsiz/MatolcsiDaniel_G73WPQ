@@ -52,21 +52,11 @@
     NSError* error;
     [[alarmDB context] save:&error];
     
-    if (error) { // Hiba van mentéskor
-        UIAlertView *hibaAblak = [[UIAlertView alloc] initWithTitle:@"Hiba!" message:@"Gáz van a mentéssel!" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:@"", nil];
+    if (error) {
+        UIAlertView *hibaAblak = [[UIAlertView alloc] initWithTitle:@"Hiba!" message:@"Hiba történt mentés során" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:@"", nil];
         [hibaAblak show];
-    } // Hiba mentéskor
-    // }
+    }
 }
 
-+(NSInteger)getCurrentWeekday
-{
-    NSDate *currentDate = [NSDate date];
-    NSCalendar *gregorianCalendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar];
-    gregorianCalendar.firstWeekday = 2;
-    NSDateComponents *dateComponents = [gregorianCalendar components:(NSWeekdayCalendarUnit) fromDate:currentDate];
-    
-    return [dateComponents weekday];
-}
 
 @end
