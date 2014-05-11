@@ -28,12 +28,11 @@
         [dt setWeekday:currentAlarm.alarmday.intValue];
         [dt setHour:currentAlarm.alarmhour.intValue];
         [dt setMinute:currentAlarm.alarmminute.intValue];
-        //NSLog(@"DT WD: %d, DT D: %D, C WD: %d, C D: %D",dt.weekday,dt.day,components.weekday,components.day);
-        
+       // NSLog(@"DT WD: %d, DT D: %D, C WD: %d, C D: %D",dt.weekday,dt.day,components.weekday,components.day);
+      //  NSLog(@"DT H: %d, DT M: %D, C H: %d, C M: %D",dt.hour,dt.minute,components.hour,components.minute);
         //ha az azktuális napnál korábbi, vagy az aktuális napon az aktuális időnél korábbi napot/időt választunk, a következő hétre ugrunk
-        if ((dt.weekday == components.weekday && ((dt.hour <= components.hour && dt.minute <= components.minute))) || (dt.weekday < components.weekday))
+        if ((dt.weekday == components.weekday && ((dt.hour < components.hour || (dt.hour == components.hour && dt.minute <= components.minute)))) || (dt.weekday < components.weekday) || (components.weekday == 1 && components.weekday < dt.weekday))
         {
-            if(dt.weekday != 1)
                 components.week = components.week+1;
         }
         
@@ -85,7 +84,7 @@
         NSDate *notificationDate = [gregorianCalendar dateFromComponents:dt];
         notification.fireDate = notificationDate;
         [[UIApplication sharedApplication] scheduleLocalNotification:notification];
-        //NSLog(@"dátum: %@",notificationDate);
+        NSLog(@"dátum: %@",notificationDate);
     }
 }
 

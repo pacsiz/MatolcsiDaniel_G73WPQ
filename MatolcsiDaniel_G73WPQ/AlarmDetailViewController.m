@@ -75,7 +75,6 @@
         NSDateFormatter *df;
         df = [[NSDateFormatter alloc] init];
         [df setLocale:huLocale];
-        
         retVal = [[df weekdaySymbols] objectAtIndex:row];
     }
     else
