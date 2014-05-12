@@ -30,11 +30,19 @@
         [dt setMinute:currentAlarm.alarmminute.intValue];
        // NSLog(@"DT WD: %d, DT D: %D, C WD: %d, C D: %D",dt.weekday,dt.day,components.weekday,components.day);
       //  NSLog(@"DT H: %d, DT M: %D, C H: %d, C M: %D",dt.hour,dt.minute,components.hour,components.minute);
+        
         //ha az azktuális napnál korábbi, vagy az aktuális napon az aktuális időnél korábbi napot/időt választunk, a következő hétre ugrunk
-        if ((dt.weekday == components.weekday && ((dt.hour < components.hour || (dt.hour == components.hour && dt.minute <= components.minute)))) || (dt.weekday < components.weekday) || (components.weekday == 1 && components.weekday < dt.weekday))
-        {
+        if (components.weekday == 1) {
+            if (components.weekday < dt.weekday || (dt.weekday == components.weekday && ((dt.hour < components.hour || (dt.hour == components.hour && dt.minute <= components.minute))))) {
                 components.week = components.week+1;
+            }
         }
+        else
+            if ((dt.weekday == components.weekday && ((dt.hour < components.hour || (dt.hour == components.hour && dt.minute <= components.minute)))) || (dt.weekday < components.weekday && dt.weekday != 1))
+            {
+                components.week = components.week+1;
+            }
+        
         
         UILocalNotification *notification = [[UILocalNotification alloc] init];
         
